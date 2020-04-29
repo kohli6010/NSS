@@ -17,7 +17,7 @@ var commentRoutes = require('./routes/comments'),
     authRoutes = require('./routes/auth');
 
 var campground = require("./models/campground");
-var list  = require("./models/")
+var List  = require("./models/list")
 
 var dotenv = require("dotenv");
 dotenv.config();
@@ -128,31 +128,34 @@ app.get('/:username/:campground/upload', (req, res) => {
     res.render('listupload.ejs', { username: req.params.username, campground: req.params.campground });
 });
 
-app.post('/:username/:campground/upload', upload.single('image'), (req, res) => {
+app.post('/:username/:campground/upload', upload.single('image'),(req, res) => {
     cloudinary.v2.uploader.upload(req.file.path, function(err, result) {
         if (err) {
             req.flash('error', err);
             return res.redirect('back');
         }
         // add cloudinary url for the image to the campground object under image property
+        // console.log(result)
         campground.findById(req.params.campground, function (err, campground) {
             if (err) {
                 console.log(err);
                 res.redirect("/campgrounds");
             }
             else {
-                .create(req.body.comment, function (err, comment) {
+                const secureUrl = { secure_url: `${result.secure_url}` }
+                List.create(secureUrl, async function (err, list) {
                     if (err) {
                         req.flash("error", "Something went wrong");
                         console.log("ERROR: " + err);
                     }
                     else {
-                        comment.author.id = req.user._id;
-                        comment.author.username = req.user.username;
-                        comment.save();
+                        list.author.id = req.user._id;
+                        list.author.username = req.user.username;
+                        list.author.link = result.secure_url
     
-                        campground.comments.push(comment);
-                        campground.save();
+                        campground.lists.push(list);
+                        await campground.save();
+                        console.log(list)
                         req.flash("success", "Successfully added comment");
                         res.redirect("/campgrounds/" + campground._id);
                     }

@@ -19,7 +19,7 @@ var campgroundSchema = new mongoose.Schema({
             ref : "Comment"
         }
     ],
-    list: [
+    lists: [
         {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'List'
